@@ -1,7 +1,7 @@
 /***
   Copyright (c) 2013 CommonsWare, LLC
   Portions Copyright (C) 2007 The Android Open Source Project
-  
+
   Licensed under the Apache License, Version 2.0 (the "License"); you may
   not use this file except in compliance with the License. You may obtain
   a copy of the License at
@@ -30,8 +30,10 @@ import android.view.OrientationEventListener;
 import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
-import java.io.IOException;
+
 import com.commonsware.cwac.camera.CameraHost.FailureReason;
+
+import java.io.IOException;
 
 public class CameraView extends ViewGroup implements
     Camera.PictureCallback {
@@ -148,9 +150,9 @@ public class CameraView extends ViewGroup implements
         Camera.Size deviceHint=
             DeviceProfile.getInstance()
                          .getPreferredPreviewSizeForVideo(getDisplayOrientation(),
-                                                          width,
-                                                          height,
-                                                          camera.getParameters());
+                                 width,
+                                 height,
+                                 camera.getParameters());
 
         previewSize=
             getHost().getPreferredPreviewSizeForVideo(getDisplayOrientation(),
@@ -179,41 +181,13 @@ public class CameraView extends ViewGroup implements
 
   @Override
   protected void onLayout(boolean changed, int l, int t, int r, int b) {
-    if (changed && getChildCount() > 0) {
-      final View child=getChildAt(0);
-      final int width=r - l;
-      final int height=b - t;
-      int previewWidth=width;
-      int previewHeight=height;
+      if (changed && getChildCount() > 0) {
 
-      // handle orientation
+          View child = getChildAt(0);
+          assert child != null;
 
-      if (previewSize != null) {
-        if (getDisplayOrientation() == 90
-            || getDisplayOrientation() == 270) {
-          previewWidth=previewSize.height;
-          previewHeight=previewSize.width;
-        }
-        else {
-          previewWidth=previewSize.width;
-          previewHeight=previewSize.height;
-        }
+          child.layout(l, t, r, b);
       }
-
-      // Center the child SurfaceView within the parent.
-      if (width * previewHeight > height * previewWidth) {
-        final int scaledChildWidth=
-            previewWidth * height / previewHeight;
-        child.layout((width - scaledChildWidth) / 2, 0,
-                     (width + scaledChildWidth) / 2, height);
-      }
-      else {
-        final int scaledChildHeight=
-            previewHeight * width / previewWidth;
-        child.layout(0, (height - scaledChildHeight) / 2, width,
-                     (height + scaledChildHeight) / 2);
-      }
-    }
   }
 
   public int getDisplayOrientation() {
@@ -367,6 +341,7 @@ public class CameraView extends ViewGroup implements
     }
   }
 
+  @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
   public void stopFaceDetection() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH
         && camera != null && isDetectingFaces) {
@@ -425,10 +400,50 @@ public class CameraView extends ViewGroup implements
 
       requestLayout();
 
+      adjustSurfaceLayoutSize(previewSize, getDisplayOrientation() == 90, w, h);
+
       camera.setParameters(getHost().adjustPreviewParameters(parameters));
       startPreview();
     }
   }
+
+    protected boolean adjustSurfaceLayoutSize(Camera.Size previewSize, boolean portrait,
+                                              int availableWidth, int availableHeight) {
+        float tmpLayoutHeight, tmpLayoutWidth;
+        if (portrait) {
+            tmpLayoutHeight = previewSize.width;
+            tmpLayoutWidth = previewSize.height;
+        } else {
+            tmpLayoutHeight = previewSize.height;
+            tmpLayoutWidth = previewSize.width;
+        }
+
+        float factH, factW, fact;
+        factH = availableHeight / tmpLayoutHeight;
+        factW = availableWidth / tmpLayoutWidth;
+        if (factH < factW) {
+            fact = factW;
+        } else {
+            fact = factH;
+        }
+
+        ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) this.getLayoutParams();
+
+        int layoutHeight = (int) (tmpLayoutHeight * fact);
+        int layoutWidth = (int) (tmpLayoutWidth * fact);
+
+        boolean layoutChanged;
+        if ((layoutWidth != this.getWidth()) || (layoutHeight != this.getHeight())) {
+            layoutParams.height = layoutHeight;
+            layoutParams.width = layoutWidth;
+            this.setLayoutParams(layoutParams); // this will trigger another surfaceChanged invocation.
+            layoutChanged = true;
+        } else {
+            layoutChanged = false;
+        }
+
+        return layoutChanged;
+    }
 
   private void startPreview() {
     camera.startPreview();
