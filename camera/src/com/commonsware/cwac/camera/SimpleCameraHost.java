@@ -155,7 +155,12 @@ public class SimpleCameraHost implements CameraHost {
     return(null);
   }
 
-  @Override
+    @Override
+    public Camera.PreviewCallback getPreviewCallback() {
+        return null;
+    }
+
+    @Override
   public void handleException(Exception e) {
     Log.e(getClass().getSimpleName(),
           "Exception in setPreviewDisplay()", e);

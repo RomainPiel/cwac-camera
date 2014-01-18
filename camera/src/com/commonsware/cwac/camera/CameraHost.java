@@ -210,6 +210,12 @@ public interface CameraHost extends Camera.AutoFocusCallback {
    */
   Camera.ShutterCallback getShutterCallback();
 
+    /**
+     * @return the Camera.PreviewCallback to be used with the
+     *         camera
+     */
+    Camera.PreviewCallback getPreviewCallback();
+
   /**
    * Called when something blows up in CameraView, to allow
    * you to alert the user as you see fit

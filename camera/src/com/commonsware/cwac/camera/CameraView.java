@@ -403,6 +403,8 @@ public class CameraView extends ViewGroup implements
       adjustSurfaceLayoutSize(previewSize, getDisplayOrientation() == 90, w, h);
 
       camera.setParameters(getHost().adjustPreviewParameters(parameters));
+
+      camera.setPreviewCallback(getHost().getPreviewCallback());
       startPreview();
     }
   }
@@ -455,6 +457,7 @@ public class CameraView extends ViewGroup implements
     inPreview=false;
     getHost().autoFocusUnavailable();
     camera.stopPreview();
+    camera.setPreviewCallback(null);
   }
 
   // based on
